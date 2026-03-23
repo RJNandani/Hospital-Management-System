@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Patients</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">Oasis<span>Care</span></div>
+        <a href="index.html" class="nav-link">Dashboard</a>
+        <a href="patients.html" class="nav-link active">Manage Patients</a>
+        <a href="doctors.html" class="nav-link">Our Doctors</a>
+    </div>
+    
+    <div class="main-content">
+        <header>
+            <h1>Manage Patients</h1>
+            <p>Register and view patient records stored in the Spring Boot H2 Database.</p>
+        </header>
+
+        <div class="card">
+            <h2>Register New Patient</h2>
+            <form id="patientForm" style="margin-top: 1rem;">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="pName" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Age</label>
+                    <input type="number" id="pAge" required placeholder="32">
+                </div>
+                <div class="form-group">
+                    <label>Contact Number</label>
+                    <input type="text" id="pContact" placeholder="555-123-4567">
+                </div>
+                <div class="form-group">
+                    <label>Medical History / Notes</label>
+                    <input type="text" id="pHistory" placeholder="e.g. Asthma, No known allergies">
+                </div>
+                <button type="submit">Submit Record</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Patient Directory</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>Contact</th>
+                        <th>History</th>
+                    </tr>
+                </thead>
+                <tbody id="patientsBody">
+                    <!-- Populated via API -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+
+        document.getElementById('patientForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pt = {
+                name: document.getElementById('pName').value,
+                age: document.getElementById('pAge').value,
+                contactNumber: document.getElementById('pContact').value,
+                medicalHistory: document.getElementById('pHistory').value
+            };
+            try {
+                await fetch(`${API_BASE}/patients`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pt)
+                });
+                e.target.reset();
+                loadPatients(); // Refresh list immediately
+            } catch (err) { alert("Failed to connect to backend"); }
+        });
+
+        async function loadPatients() {
+            try {
+                const res = await fetch(`${API_BASE}/patients`);
+                const data = await res.json();
+                const tbody = document.getElementById('patientsBody');
+                tbody.innerHTML = '';
+                if(data.length === 0) tbody.innerHTML = '<tr><td colspan="5">No patients found. Create one above!</td></tr>';
+                data.forEach(p => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>#${p.id}</td>
+                            <td style="font-weight: bold; color: white">${p.name}</td>
+                            <td>${p.age}</td>
+                            <td>${p.contactNumber}</td>
+                            <td style="color: var(--text-muted)">${p.medicalHistory}</td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {}
+        }
+        loadPatients();
+    </script>
+</body>
+</html>

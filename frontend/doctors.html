@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Doctors</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">Oasis<span>Care</span></div>
+        <a href="index.html" class="nav-link">Dashboard</a>
+        <a href="patients.html" class="nav-link">Manage Patients</a>
+        <a href="doctors.html" class="nav-link active">Our Doctors</a>
+    </div>
+    
+    <div class="main-content">
+        <header>
+            <h1>Our Doctors</h1>
+            <p>Manage medical staff.</p>
+        </header>
+
+        <div class="card">
+            <h2>Onboard New Doctor</h2>
+            <form id="docForm" style="margin-top: 1rem;">
+                <div class="form-group">
+                    <label>Dr. Name</label>
+                    <input type="text" id="dName" required placeholder="Jane Smith">
+                </div>
+                <div class="form-group">
+                    <label>Specialization</label>
+                    <input type="text" id="dSpec" required placeholder="e.g. Cardiology, Neurology">
+                </div>
+                <button type="submit">Complete Onboarding</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Medical Staff Directory</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Specialization</th>
+                    </tr>
+                </thead>
+                <tbody id="docBody">
+                    <!-- Populated via API -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+
+        document.getElementById('docForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const doc = {
+                name: document.getElementById('dName').value,
+                specialization: document.getElementById('dSpec').value
+            };
+            try {
+                await fetch(`${API_BASE}/doctors`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(doc)
+                });
+                e.target.reset();
+                loadDocs(); // Refresh right away
+            } catch (err) { alert("Failed to connect to backend"); }
+        });
+
+        async function loadDocs() {
+            try {
+                const res = await fetch(`${API_BASE}/doctors`);
+                const data = await res.json();
+                const tbody = document.getElementById('docBody');
+                tbody.innerHTML = '';
+                if(data.length === 0) tbody.innerHTML = '<tr><td colspan="3">No doctors registered.</td></tr>';
+                data.forEach(d => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>#${d.id}</td>
+                            <td style="font-weight: bold; color: white">Dr. ${d.name}</td>
+                            <td><span style="background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; font-size: 0.85em;">${d.specialization}</span></td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {}
+        }
+        loadDocs();
+    </script>
+</body>
+</html>
