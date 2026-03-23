@@ -12,6 +12,7 @@
         <a href="index.html" class="nav-link active">Dashboard</a>
         <a href="patients.html" class="nav-link">Manage Patients</a>
         <a href="doctors.html" class="nav-link">Our Doctors</a>
+        <a href="appointments.html" class="nav-link">Appointments</a>
     </div>
     
     <div class="main-content">
@@ -36,6 +37,12 @@
         </div>
 
         <div class="card" style="margin-top: 2rem;">
+            <h2>Quick Doctor Search</h2>
+            <input type="text" id="filterDocs" style="width:100%; padding:0.8rem; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; outline:none; margin-top:1rem;" placeholder="🔍 Locate a doctor by name or specialization..." onkeyup="filterDoctors()">
+            <div id="doctorSearchResults" style="display:none; background:rgba(0,0,0,0.2); padding:1rem; border-radius:8px; margin-top:1rem;"></div>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
             <h2>Recent Appointments</h2>
             <table>
                 <thead>
@@ -56,6 +63,34 @@
 
     <script>
         const API_BASE = 'http://localhost:8080/api';
+        let allDocsHome = [];
+
+        function filterDoctors() {
+            const term = document.getElementById('filterDocs').value.toLowerCase();
+            const resBox = document.getElementById('doctorSearchResults');
+            
+            if(!term) {
+                resBox.style.display = 'none';
+                return;
+            }
+            
+            resBox.style.display = 'block';
+            const filtered = allDocsHome.filter(d => 
+                d.specialization.toLowerCase().includes(term) || d.name.toLowerCase().includes(term)
+            );
+            
+            if(filtered.length === 0) {
+                resBox.innerHTML = '<span style="color:var(--text-muted)">No doctors found.</span>';
+                return;
+            }
+
+            let html = '<ul style="list-style:none;">';
+            filtered.forEach(d => {
+                html += `<li style="padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:white; font-weight:bold">Dr. ${d.name}</span> <span style="background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:12px; font-size:0.8em; margin-left:10px;">${d.specialization}</span></li>`;
+            });
+            html += '</ul>';
+            resBox.innerHTML = html;
+        }
 
         async function loadDashboard() {
             try {
@@ -64,6 +99,8 @@
                     fetch(`${API_BASE}/doctors`).then(r => r.json()),
                     fetch(`${API_BASE}/appointments`).then(r => r.json())
                 ]);
+
+                allDocsHome = doctors;
 
                 document.getElementById('patientCount').innerText = patients.length;
                 document.getElementById('doctorCount').innerText = doctors.length;

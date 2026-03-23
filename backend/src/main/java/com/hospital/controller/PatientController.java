@@ -23,4 +23,10 @@ public class PatientController {
     public Patient addPatient(@RequestBody Patient patient) {
         return patientService.addPatient(patient);
     }
+
+    @PutMapping("/{id}")
+    public Patient updatePatient(@PathVariable Long id, @RequestBody Patient patient) {
+        patient.setId(id); // JPA save() will update existing record if ID is provided
+        return patientService.addPatient(patient);
+    }
 }

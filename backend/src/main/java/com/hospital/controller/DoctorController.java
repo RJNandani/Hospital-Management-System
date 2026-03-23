@@ -24,4 +24,10 @@ public class DoctorController {
     public Doctor addDoctor(@RequestBody Doctor doctor) {
         return doctorDAO.save(doctor);
     }
+
+    @PutMapping("/{id}")
+    public Doctor updateDoctor(@PathVariable Long id, @RequestBody Doctor doctor) {
+        doctor.setId(id);
+        return doctorDAO.save(doctor);
+    }
 }

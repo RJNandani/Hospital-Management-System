@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body style="display: block; padding: 3rem; max-width: 800px; margin: 0 auto; min-height: 100vh;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div class="logo" style="margin-bottom: 0;">Oasis<span>Care</span> | Doctor Portal</div>
+        <a href="landing.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">← Back to Home</a>
+    </div>
+
+    <div class="card">
+        <h2>Who is logging in?</h2>
+        <select id="doctorSelect" style="width: 100%; padding: 0.8rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; margin-top: 1rem; outline: none;" onchange="loadMySchedule()">
+            <option value="">-- Select Your Name --</option>
+        </select>
+    </div>
+
+    <div id="doctorDashboard" style="display: none;">
+        <div class="card">
+            <h2>My Appointment Schedule</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Patient Name</th>
+                        <th>Medical History</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="myAppts"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        let allDocs = [];
+        let allAppts = [];
+
+        async function initPortal() {
+            try {
+                const [docs, appts] = await Promise.all([
+                    fetch(`${API_BASE}/doctors`).then(r => r.json()),
+                    fetch(`${API_BASE}/appointments`).then(r => r.json())
+                ]);
+                allDocs = docs;
+                allAppts = appts;
+
+                const sel = document.getElementById('doctorSelect');
+                docs.forEach(d => {
+                    sel.innerHTML += `<option value="${d.id}">Dr. ${d.name} (${d.specialization})</option>`;
+                });
+            } catch(e){}
+        }
+
+        function loadMySchedule() {
+            const did = document.getElementById('doctorSelect').value;
+            const dash = document.getElementById('doctorDashboard');
+            if(!did) { dash.style.display = 'none'; return; }
+            
+            dash.style.display = 'block';
+            
+            const myA = allAppts.filter(a => a.doctor.id == did);
+            const tbody = document.getElementById('myAppts');
+            tbody.innerHTML = '';
+            if(myA.length === 0) tbody.innerHTML = '<tr><td colspan="5">No appointments scheduled for you.</td></tr>';
+            
+            myA.forEach(a => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight:bold; color:white">${a.patient.name}</td>
+                        <td style="color:var(--text-muted); font-size: 0.9em;">${a.patient.medicalHistory}</td>
+                        <td>${a.appointmentDate}</td>
+                        <td>${a.appointmentTime}</td>
+                        <td><span style="color:var(--accent); font-weight: bold;">${a.status}</span></td>
+                    </tr>
+                `;
+            });
+        }
+        initPortal();
+    </script>
+</body>
+</html>

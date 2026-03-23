@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Portal - Login</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .split-layout { 
+            position: relative; 
+            width: 100vw; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            display: grid; 
+            grid-template-columns: 1fr 340px 1fr; 
+            gap: 3rem; 
+            padding: 0 5vw; 
+            box-sizing: border-box; 
+            margin-top: 1rem; 
+        }
+        @media (max-width: 1024px) { 
+            .split-layout { grid-template-columns: 1fr; padding: 0 5vw; } 
+            .divider-images { display: none !important; }
+        }
+        .divider-images { display: flex; flex-direction: row; gap: 1rem; justify-content: center; height: 100%; min-height: 550px; }
+        .divider-images img { width: 50%; height: 100%; object-fit: cover; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); opacity: 0.9; }
+
+        .login-input { font-size: 1.2rem; text-align: center; margin-bottom: 1rem; width: 100%; padding: 1rem; }
+        .btn-full { width: 100%; font-size: 1.1rem; padding: 1rem; }
+        
+        .dashboard-wrapper { position: relative; width: 90vw; left: 50%; transform: translateX(-50%); }
+        .dashboard-layout { display: grid; grid-template-columns: 1fr 1fr 0.85fr; gap: 3rem; margin-top: 1rem; align-items: start; }
+        @media (max-width: 1024px) { .dashboard-layout { grid-template-columns: 1fr; } }
+
+        .timeline-date { color: var(--accent); font-weight: bold; font-size: 0.9em; display: block; }
+        .appt-status { font-weight: bold; font-size: 0.85em; padding: 3px 8px; border-radius: 12px; }
+        .status-completed { background: rgba(38, 166, 154, 0.2); color: #26A69A; }
+        .status-scheduled { background: rgba(21, 101, 192, 0.2); color: #64B5F6; }
+    </style>
+</head>
+<body style="display: block; padding: 3rem; max-width: 1000px; margin: 0 auto; min-height: 100vh;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div class="logo" style="margin-bottom: 0;">Oasis<span>Care</span> | Patient Portal</div>
+        <a href="landing.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">← Back to Home</a>
+    </div>
+
+    <!-- LOGIN & REGISTRATION SCREEN -->
+    <div id="authScreen" style="position: relative; width: 90vw; left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: 0.8fr 1fr 1fr; gap: 4rem; margin: 2rem 0; align-items: stretch;">
+        
+        <!-- LEFT: BRANDING & INFO -->
+        <div style="background: var(--surface); padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 30px rgba(13, 43, 76, 0.15); height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <h1 style="color: var(--primary); font-size: 2.5rem; margin-bottom: 1rem;">Oasis<span style="color:var(--accent)">Care</span></h1>
+                <p style="font-size: 1.05rem; color: var(--text-main); margin-bottom: 1.5rem; line-height: 1.6;">
+                    Welcome to your secure Patient Portal. Manage your records and book specialists instantly from one central hub.
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+                    <!-- Fixed specific hospital & doctor images -->
+                    <img src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=400&h=250&auto=format&fit=crop" alt="Hospital Exterior" style="width: 100%; height: 150px; object-fit: cover; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                    <img src="https://images.unsplash.com/photo-1538108149393-fbbd81895907?q=80&w=400&h=250&auto=format&fit=crop" alt="Medical Setup" style="width: 100%; height: 150px; object-fit: cover; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                </div>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">
+                ✓ Over 50+ Top Medical Specialists <br>
+                ✓ Secure, encrypted records <br>
+                ✓ 24/7 Appointment Booking
+            </p>
+        </div>
+
+        <!-- MIDDLE: SECURE LOGIN -->
+        <div class="card" style="margin-bottom: 0; padding: 3rem 2.5rem; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+            <h2 style="color: var(--primary); text-align: center; margin-bottom: 1rem; font-size: 2rem;">Patient Login</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 3rem;">Already have an account? Enter your unique ID.</p>
+            <input type="number" id="loginId" class="login-input" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; outline: none; margin-bottom: 1.5rem; padding: 1rem;" placeholder="Your Patient ID #" required>
+            <button class="btn-full" style="background: var(--primary); color: white; border: none; cursor:pointer; padding: 1rem; font-size: 1.1rem;" onclick="loginPatient()">Access Dashboard</button>
+            <p id="loginError" style="color: #ff4b4b; text-align: center; margin-top: 1.5rem; display: none;">Invalid Patient ID.</p>
+        </div>
+
+        <!-- RIGHT: REGISTRATION -->
+        <div class="card" style="margin-bottom: 0; padding: 3rem 2.5rem; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+            <h2 style="color: var(--primary); margin-bottom: 1rem; text-align: center; font-size: 2rem;">New Patient</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2.5rem;">Register quickly to book your first appointment.</p>
+            <form id="newPatientForm">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <input type="text" id="rName" style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; outline: none;" required placeholder="Full Name">
+                </div>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <input type="number" id="rAge" style="width: 50%; padding: 0.8rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; outline: none;" required placeholder="Age">
+                    <input type="text" id="rContact" style="width: 50%; padding: 0.8rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; outline: none;" placeholder="Contact Number">
+                </div>
+                <div class="form-group" style="margin-bottom: 2rem;">
+                    <input type="text" id="rHistory" style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; outline: none;" placeholder="Medical History (Optional)">
+                </div>
+                <button type="submit" class="btn-full" style="background: var(--accent); color: white; border: none; cursor:pointer; padding: 1rem; font-size: 1.1rem;">Create Account</button>
+            </form>
+        </div>
+        
+    </div>
+
+    <!-- ACTUAL DASHBOARD (SPLIT LAYOUT) -->
+    <div id="patientDashboard" style="display: none;" class="dashboard-wrapper">
+        
+        <div style="background: var(--primary); padding: 1.5rem 2rem; border-radius: 12px; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+            <h2 id="welcomeMsg" style="color: white; margin: 0;">Welcome, Patient!</h2>
+            <button onclick="logout()" style="background: transparent; color: white; border: 1px solid white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">Log Out</button>
+        </div>
+
+        <div class="dashboard-layout">
+            <!-- LEFT: PATIENT DETAILS -->
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                <div class="card" style="height: fit-content; border-top: 4px solid var(--accent); margin: 0;">
+                    <h2 style="color: var(--primary); margin-bottom: 1rem;">My Profile</h2>
+                    <p style="margin-bottom: 0.5rem;"><strong style="color:white">Name:</strong> <span id="myName">...</span></p>
+                    <p style="margin-bottom: 0.5rem;"><strong style="color:white">Age:</strong> <span id="myAge">...</span></p>
+                    <p style="margin-bottom: 0.5rem;"><strong style="color:white">Contact:</strong> <span id="myContact">...</span></p>
+                </div>
+
+                <div class="card" style="height: fit-content; border-top: 4px solid var(--primary); margin: 0;">
+                    <h2 style="color: var(--primary); margin-bottom: 1rem;">Medical History</h2>
+                    <div id="myHistory" style="color: var(--text-muted); line-height: 1.6;">...</div>
+                </div>
+            </div>
+
+            <!-- MIDDLE: APPOINTMENTS TIMELINE -->
+            <div class="card" style="height: fit-content;">
+                <h2 style="color: var(--primary); margin-bottom: 1rem;">Appointment Timeline</h2>
+                <table style="width: 100%;">
+                    <tbody id="myAppts"></tbody>
+                </table>
+            </div>
+
+            <!-- RIGHT: BOOK FUTURE APPOINTMENT -->
+            <div class="card" style="height: fit-content; border-top: 4px solid var(--primary);">
+                <h2 style="color: var(--primary); margin-bottom: 1rem;">Book an Appointment</h2>
+                
+                <!-- NEW SEARCH MODULE -->
+                <p style="margin-bottom: 0.5rem; font-size: 0.9em; color: var(--text-muted); font-weight: bold;">Step 1: Find a Specialist</p>
+                <input type="text" id="internalFilter" style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; outline: none; margin-bottom: 0.5rem;" placeholder="🔍 Search doctors by name..." onkeyup="filterInternalDocs()">
+                <div id="internalDocResults" style="display:none; background:rgba(0,0,0,0.2); padding:0.5rem; border-radius:8px; margin-bottom: 1.5rem; max-height: 150px; overflow-y: auto;"></div>
+
+                <p style="margin-bottom: 0.5rem; font-size: 0.9em; color: var(--text-muted); font-weight: bold;">Step 2: Schedule Visit</p>
+                <form id="bookApptForm">
+                    <div class="form-group">
+                        <label style="color: white; margin-bottom: 0.5rem; display: block;">Select Doctor</label>
+                        <select id="bDoctor" required style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white;">
+                            <option value="">-- Choose a Doctor --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label style="color: white; margin-bottom: 0.5rem; display: block;">Date</label>
+                        <input type="date" id="bDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label style="color: white; margin-bottom: 0.5rem; display: block;">Time</label>
+                        <input type="time" id="bTime" required>
+                    </div>
+                    <button type="submit" class="btn-full" style="background: var(--primary); color: white; margin-top: 1rem; border: none; cursor:pointer;">Confirm Booking</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        let allDocsHome = [];
+        let currentLoggedInPatientId = null;
+
+        async function initPortal() {
+            try {
+                const res = await fetch(`${API_BASE}/doctors`);
+                allDocsHome = await res.json();
+                
+                // Populate Booking Dropdown
+                const docSelect = document.getElementById('bDoctor');
+                allDocsHome.forEach(d => {
+                    docSelect.innerHTML += `<option value="${d.id}" style="color: black;">Dr. ${d.name} - ${d.specialization}</option>`;
+                });
+            } catch(e){}
+        }
+        initPortal();
+
+        // internal dashboard dynamic search logic
+        function filterInternalDocs() {
+            const term = document.getElementById('internalFilter').value.toLowerCase();
+            const resBox = document.getElementById('internalDocResults');
+            if(!term) { resBox.style.display = 'none'; return; }
+            resBox.style.display = 'block';
+            
+            const filtered = allDocsHome.filter(d => 
+                d.specialization.toLowerCase().includes(term) || d.name.toLowerCase().includes(term)
+            );
+            
+            if(filtered.length === 0) {
+                resBox.innerHTML = '<span style="color:var(--text-muted); padding: 0.5rem; display: block;">No matching doctors found.</span>';
+                return;
+            }
+            
+            let html = '<ul style="list-style:none; padding: 0; margin: 0;">';
+            filtered.forEach(d => {
+                html += `<li style="padding:0.6rem 0.5rem; border-bottom:1px solid rgba(255,255,255,0.05); cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'" onclick="selectDocForBooking('${d.id}')">
+                            <span style="color:white; font-weight:bold; font-size: 0.95em;">Dr. ${d.name}</span>
+                            <span style="background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:12px; font-size:0.8em; margin-left:8px;">${d.specialization}</span>
+                         </li>`;
+            });
+            html += '</ul>';
+            resBox.innerHTML = html;
+        }
+
+        function selectDocForBooking(docId) {
+            document.getElementById('bDoctor').value = docId;
+            document.getElementById('internalDocResults').style.display = 'none';
+            document.getElementById('internalFilter').value = '';
+        }
+
+        // Doctor Filter Logic
+        function filterDoctors() {
+            const term = document.getElementById('filterDocs').value.toLowerCase();
+            const resBox = document.getElementById('doctorSearchResults');
+            if(!term) { resBox.style.display = 'none'; return; }
+            resBox.style.display = 'block';
+            
+            const filtered = allDocsHome.filter(d => 
+                d.specialization.toLowerCase().includes(term) || d.name.toLowerCase().includes(term)
+            );
+            if(filtered.length === 0) {
+                resBox.innerHTML = '<span style="color:var(--text-muted)">No doctors found.</span>';
+                return;
+            }
+            let html = '<ul style="list-style:none; padding: 0;">';
+            filtered.forEach(d => {
+                html += `<li style="padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:white; font-weight:bold">Dr. ${d.name}</span> <span style="background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:12px; font-size:0.8em; margin-left:10px;">${d.specialization}</span></li>`;
+            });
+            html += '</ul>';
+            resBox.innerHTML = html;
+        }
+
+        // Registration Logic
+        document.getElementById('newPatientForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pt = {
+                name: document.getElementById('rName').value,
+                age: document.getElementById('rAge').value,
+                contactNumber: document.getElementById('rContact').value,
+                medicalHistory: document.getElementById('rHistory').value
+            };
+            try {
+                const res = await fetch(`${API_BASE}/patients`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pt)
+                });
+                const savedPatient = await res.json();
+                e.target.reset();
+                document.getElementById('loginId').value = savedPatient.id;
+                alert(`Successfully registered!\n\nYour permanent Patient ID is: ` + savedPatient.id + `\n\n(Write this down! We will log you in automatically right now.)`);
+                loginPatient();
+            } catch (err) { alert("Registration failed."); }
+        });
+
+        // Booking Logic directly from Dashboard
+        document.getElementById('bookApptForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if(!currentLoggedInPatientId) return;
+
+            const appt = {
+                patient: { id: currentLoggedInPatientId },
+                doctor: { id: document.getElementById('bDoctor').value },
+                appointmentDate: document.getElementById('bDate').value,
+                appointmentTime: document.getElementById('bTime').value,
+                status: 'SCHEDULED'
+            };
+
+            try {
+                await fetch(`${API_BASE}/appointments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(appt)
+                });
+                alert("Appointment successfully booked!");
+                e.target.reset();
+                // Refresh the login to pull new appointments
+                await refreshDashboardData();
+            } catch (err) { alert("Booking failed."); }
+        });
+
+        // Existing Patient Login Logic
+        async function loginPatient() {
+            const inputId = document.getElementById('loginId').value;
+            const errBox = document.getElementById('loginError');
+            if(!inputId) return;
+
+            try {
+                const resP = await fetch(`${API_BASE}/patients`);
+                const pts = await resP.json();
+                
+                const myProfile = pts.find(p => p.id == inputId);
+                
+                if(!myProfile) {
+                    errBox.style.display = 'block';
+                } else {
+                    currentLoggedInPatientId = inputId;
+                    errBox.style.display = 'none';
+                    document.getElementById('authScreen').style.display = 'none';
+                    document.getElementById('patientDashboard').style.display = 'block';
+                    
+                    document.getElementById('welcomeMsg').innerText = `Welcome back, ${myProfile.name}!`;
+                    document.getElementById('myName').innerText = myProfile.name;
+                    document.getElementById('myAge').innerText = myProfile.age;
+                    document.getElementById('myContact').innerText = myProfile.contactNumber;
+                    
+                    let histStr = myProfile.medicalHistory || "";
+                    if (!histStr.trim()) {
+                        document.getElementById('myHistory').innerHTML = "None recorded.";
+                    } else {
+                        let items = histStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                        let ul = '<ul style="padding-left: 1.2rem; margin: 0;">';
+                        items.forEach(item => { ul += `<li style="margin-bottom: 0.5rem;">${item}</li>`; });
+                        ul += '</ul>';
+                        document.getElementById('myHistory').innerHTML = ul;
+                    }
+
+                    await refreshDashboardData();
+                }
+            } catch(e) { alert("Failed to connect to database for login."); }
+        }
+
+        async function refreshDashboardData() {
+            try {
+                const resA = await fetch(`${API_BASE}/appointments`);
+                const appts = await resA.json();
+                
+                // Get my appointments directly
+                let myA = appts.filter(a => a.patient.id == currentLoggedInPatientId);
+                
+                // Sort FIFO (Chronological): Oldest first, Newest/Future last.
+                myA.sort((a, b) => {
+                    let dA = new Date(a.appointmentDate + "T" + a.appointmentTime);
+                    let dB = new Date(b.appointmentDate + "T" + b.appointmentTime);
+                    return dA - dB; // sorts ascending (FIFO)
+                });
+
+                const tbody = document.getElementById('myAppts');
+                tbody.innerHTML = '';
+                if(myA.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No appointment history.</td></tr>';
+                    return;
+                }
+                
+                myA.forEach(a => {
+                    let statusClass = a.status === 'COMPLETED' ? 'status-completed' : 'status-scheduled';
+                    tbody.innerHTML += `
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 1rem 0.5rem;">
+                                <span class="timeline-date">${a.appointmentDate} at ${a.appointmentTime}</span>
+                                <strong style="color:white; display:block; margin-top:0.3rem;">Dr. ${a.doctor.name}</strong>
+                                <span style="font-size: 0.85em; color: var(--text-muted);">${a.doctor.specialization}</span>
+                            </td>
+                            <td style="text-align: right;">
+                                <span class="appt-status ${statusClass}">${a.status}</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch(e){}
+        }
+
+        function logout() {
+            currentLoggedInPatientId = null;
+            document.getElementById('loginId').value = '';
+            document.getElementById('patientDashboard').style.display = 'none';
+            document.getElementById('authScreen').style.display = 'grid';
+            document.getElementById('loginError').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

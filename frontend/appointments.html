@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        select {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 8px;
+            outline: none;
+            margin-bottom: 1.5rem;
+        }
+        select option {
+            background: var(--bg-color);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">Oasis<span>Care</span></div>
+        <a href="index.html" class="nav-link">Dashboard</a>
+        <a href="patients.html" class="nav-link">Manage Patients</a>
+        <a href="doctors.html" class="nav-link">Our Doctors</a>
+        <a href="appointments.html" class="nav-link active">Appointments</a>
+    </div>
+    
+    <div class="main-content">
+        <header>
+            <h1>Book Appointment</h1>
+            <p>Schedule a new medical appointment.</p>
+        </header>
+
+        <div class="card">
+            <h2>New Appointment Details</h2>
+            <form id="apptForm" style="margin-top: 1rem;">
+                <label>Select Patient</label>
+                <select id="patientSelect" required>
+                    <option value="">Loading Patients...</option>
+                </select>
+
+                <label>Select Doctor</label>
+                <select id="doctorSelect" required>
+                    <option value="">Loading Doctors...</option>
+                </select>
+
+                <div class="form-group">
+                    <label>Date (YYYY-MM-DD)</label>
+                    <input type="date" id="aDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Time</label>
+                    <input type="time" id="aTime" required>
+                </div>
+
+                <button type="submit">Book Appointment</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+
+        async function loadDropdowns() {
+            try {
+                const [patients, doctors] = await Promise.all([
+                    fetch(`${API_BASE}/patients`).then(r => r.json()),
+                    fetch(`${API_BASE}/doctors`).then(r => r.json())
+                ]);
+
+                const pSelect = document.getElementById('patientSelect');
+                pSelect.innerHTML = '<option value="">-- Choose Patient --</option>';
+                patients.forEach(p => {
+                    pSelect.innerHTML += `<option value="${p.id}">${p.name} (ID: ${p.id})</option>`;
+                });
+
+                const dSelect = document.getElementById('doctorSelect');
+                dSelect.innerHTML = '<option value="">-- Choose Doctor --</option>';
+                doctors.forEach(d => {
+                    dSelect.innerHTML += `<option value="${d.id}">Dr. ${d.name} (${d.specialization})</option>`;
+                });
+            } catch (err) { alert("Failed to load data from backend."); }
+        }
+
+        document.getElementById('apptForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                patient: { id: document.getElementById('patientSelect').value },
+                doctor: { id: document.getElementById('doctorSelect').value },
+                appointmentDate: document.getElementById('aDate').value,
+                appointmentTime: document.getElementById('aTime').value
+            };
+            
+            try {
+                await fetch(`${API_BASE}/appointments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                alert('Appointment Booked Successfully!');
+                window.location.href = 'index.html';
+            } catch (err) { alert("Booking failed"); }
+        });
+
+        loadDropdowns();
+    </script>
+</body>
+</html>

@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Patients</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .search-bar { width: 100%; margin-bottom: 1rem; }
+        .action-btn { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 4px 10px; font-size: 0.8em; margin-right: 5px; }
+        .action-btn:hover { background: var(--primary); color: white; }
+        .save-btn { border-color: var(--accent); color: var(--accent); }
+        .save-btn:hover { background: var(--accent); color: white; }
+        td input { padding: 4px; font-size: 0.9em; }
+    </style>
 </head>
 <body>
     <div class="sidebar">
@@ -12,12 +20,13 @@
         <a href="index.html" class="nav-link">Dashboard</a>
         <a href="patients.html" class="nav-link active">Manage Patients</a>
         <a href="doctors.html" class="nav-link">Our Doctors</a>
+        <a href="appointments.html" class="nav-link">Appointments</a>
     </div>
     
     <div class="main-content">
         <header>
             <h1>Manage Patients</h1>
-            <p>Register and view patient records stored in the Spring Boot H2 Database.</p>
+            <p>Register, search, and edit patient records.</p>
         </header>
 
         <div class="card">
@@ -37,14 +46,21 @@
                 </div>
                 <div class="form-group">
                     <label>Medical History / Notes</label>
-                    <input type="text" id="pHistory" placeholder="e.g. Asthma, No known allergies">
+                    <input type="text" id="pHistory" placeholder="e.g. Asthma">
                 </div>
                 <button type="submit">Submit Record</button>
             </form>
         </div>
 
         <div class="card">
+            <h2>Quick Doctor Locator</h2>
+            <input type="text" id="filterDocs" class="search-bar" style="margin-top:1rem;" placeholder="🔍 Find a doctor by name or specialization..." onkeyup="filterDoctors()">
+            <div id="doctorSearchResults" style="display:none; background:rgba(0,0,0,0.2); padding:1rem; border-radius:8px;"></div>
+        </div>
+
+        <div class="card">
             <h2>Patient Directory</h2>
+            <input type="text" id="searchPatients" class="search-bar" placeholder="🔍 Search patients by name..." onkeyup="filterPatients()">
             <table>
                 <thead>
                     <tr>
@@ -53,10 +69,10 @@
                         <th>Age</th>
                         <th>Contact</th>
                         <th>History</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="patientsBody">
-                    <!-- Populated via API -->
                 </tbody>
             </table>
         </div>
@@ -64,6 +80,43 @@
 
     <script>
         const API_BASE = 'http://localhost:8080/api';
+        let allPatients = [];
+        let allDocsHome = [];
+
+        async function fetchDoctorsForSearch() {
+            try {
+                const res = await fetch(`${API_BASE}/doctors`);
+                allDocsHome = await res.json();
+            } catch(e){}
+        }
+        fetchDoctorsForSearch();
+        
+        function filterDoctors() {
+            const term = document.getElementById('filterDocs').value.toLowerCase();
+            const resBox = document.getElementById('doctorSearchResults');
+            
+            if(!term) {
+                resBox.style.display = 'none';
+                return;
+            }
+            
+            resBox.style.display = 'block';
+            const filtered = allDocsHome.filter(d => 
+                d.specialization.toLowerCase().includes(term) || d.name.toLowerCase().includes(term)
+            );
+            
+            if(filtered.length === 0) {
+                resBox.innerHTML = '<span style="color:var(--text-muted)">No doctors found.</span>';
+                return;
+            }
+
+            let html = '<ul style="list-style:none;">';
+            filtered.forEach(d => {
+                html += `<li style="padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:white; font-weight:bold">Dr. ${d.name}</span> <span style="background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:12px; font-size:0.8em; margin-left:10px;">${d.specialization}</span></li>`;
+            });
+            html += '</ul>';
+            resBox.innerHTML = html;
+        }
 
         document.getElementById('patientForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -73,37 +126,82 @@
                 contactNumber: document.getElementById('pContact').value,
                 medicalHistory: document.getElementById('pHistory').value
             };
-            try {
-                await fetch(`${API_BASE}/patients`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(pt)
-                });
-                e.target.reset();
-                loadPatients(); // Refresh list immediately
-            } catch (err) { alert("Failed to connect to backend"); }
+            await fetch(`${API_BASE}/patients`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(pt)
+            });
+            e.target.reset();
+            loadPatients();
         });
 
         async function loadPatients() {
             try {
                 const res = await fetch(`${API_BASE}/patients`);
-                const data = await res.json();
-                const tbody = document.getElementById('patientsBody');
-                tbody.innerHTML = '';
-                if(data.length === 0) tbody.innerHTML = '<tr><td colspan="5">No patients found. Create one above!</td></tr>';
-                data.forEach(p => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>#${p.id}</td>
-                            <td style="font-weight: bold; color: white">${p.name}</td>
-                            <td>${p.age}</td>
-                            <td>${p.contactNumber}</td>
-                            <td style="color: var(--text-muted)">${p.medicalHistory}</td>
-                        </tr>
-                    `;
-                });
+                allPatients = await res.json();
+                renderTable(allPatients);
             } catch (err) {}
         }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('patientsBody');
+            tbody.innerHTML = '';
+            if(data.length === 0) tbody.innerHTML = '<tr><td colspan="6">No records found.</td></tr>';
+            
+            data.forEach(p => {
+                tbody.innerHTML += `
+                    <tr id="row-${p.id}">
+                        <td>#${p.id}</td>
+                        <td class="p-name" style="font-weight: bold; color: white">${p.name}</td>
+                        <td class="p-age">${p.age}</td>
+                        <td class="p-contact">${p.contactNumber}</td>
+                        <td class="p-history" style="color: var(--text-muted)">${p.medicalHistory}</td>
+                        <td>
+                            <button class="action-btn" onclick="editRow(${p.id})">Edit</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function filterPatients() {
+            const term = document.getElementById('searchPatients').value.toLowerCase();
+            const filtered = allPatients.filter(p => p.name.toLowerCase().includes(term));
+            renderTable(filtered);
+        }
+
+        function editRow(id) {
+            const row = document.getElementById(`row-${id}`);
+            const name = row.querySelector('.p-name').innerText;
+            const age = row.querySelector('.p-age').innerText;
+            const contact = row.querySelector('.p-contact').innerText;
+            const history = row.querySelector('.p-history').innerText;
+
+            row.innerHTML = `
+                <td>#${id}</td>
+                <td><input type="text" id="edit-name-${id}" value="${name}"></td>
+                <td><input type="number" id="edit-age-${id}" value="${age}"></td>
+                <td><input type="text" id="edit-contact-${id}" value="${contact}"></td>
+                <td><input type="text" id="edit-history-${id}" value="${history}"></td>
+                <td><button class="action-btn save-btn" onclick="saveRow(${id})">Save</button></td>
+            `;
+        }
+
+        async function saveRow(id) {
+            const updated = {
+                name: document.getElementById(`edit-name-${id}`).value,
+                age: document.getElementById(`edit-age-${id}`).value,
+                contactNumber: document.getElementById(`edit-contact-${id}`).value,
+                medicalHistory: document.getElementById(`edit-history-${id}`).value
+            };
+            await fetch(`${API_BASE}/patients/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updated)
+            });
+            loadPatients(); // Reload fresh real data from DB
+        }
+
         loadPatients();
     </script>
 </body>

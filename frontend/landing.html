@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OasisCare Hospital - Home</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .hero { text-align: center; padding: 4rem 2rem; background: linear-gradient(135deg, rgba(21, 101, 192, 0.2), rgba(38, 166, 154, 0.1)); border-radius: 16px; margin-bottom: 3rem; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; color: #fff; }
+        .hero p { font-size: 1.2rem; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+        
+        .portal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-bottom: 3rem; }
+        .portal-card { background: var(--surface); padding: 2rem; border-radius: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.3s; text-decoration: none; display: block; }
+        .portal-card:hover { transform: translateY(-10px); border-color: var(--primary); box-shadow: 0 10px 30px rgba(79, 70, 229, 0.3); }
+        .portal-card h2 { color: white; margin-bottom: 1rem; }
+        .portal-card p { color: var(--text-muted); }
+        .portal-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+        .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 1.5rem; padding-bottom: 1rem; margin-top: 2rem; }
+        .carousel-item { flex: 0 0 calc(33.333% - 1rem); scroll-snap-align: start; background: var(--surface); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+        .carousel::-webkit-scrollbar { height: 8px; }
+        .carousel::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+        
+        /* New Image Hero Carousel */
+        .hero-carousel { position: relative; width: 88vw; left: 50%; transform: translateX(-50%); max-width: none; margin: 0 auto 3rem auto; height: 600px; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .slides { display: flex; width: 300%; height: 100%; transition: transform 0.8s ease-in-out; }
+        .slide { width: 33.3333%; height: 100%; position: relative; } 
+        .slide img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.4); }
+        .slide-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 80%; }
+        .slide-content h1 { font-size: 3.5rem; color: #fff; margin-bottom: 1rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
+        .slide-content p { font-size: 1.2rem; color: #fff; line-height: 1.6; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+        
+        .c-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; z-index: 10; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+        .c-btn:hover { background: var(--primary); }
+        .prev-btn { left: 20px; }
+        .next-btn { right: 20px; }
+        
+        .dots { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 10; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: 0.3s; }
+        .dot.active { background: var(--primary); transform: scale(1.3); }
+    </style>
+</head>
+<body style="display: block; padding: 1rem 3rem 3rem 3rem; max-width: 1200px; margin: 0 auto; min-height: 100vh;">
+
+    <div class="logo" style="text-align: center; font-size: 2.5rem; margin-top: 0rem; margin-bottom: 1.5rem;">Oasis<span>Care</span> Hospital</div>
+
+    <!-- Hero Image Carousel -->
+    <div class="hero-carousel">
+        <div class="slides" id="heroSlider">
+            <div class="slide">
+                <img src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1200&q=80" alt="Hospital Building">
+                <div class="slide-content">
+                    <h1>Welcome to OasisCare</h1>
+                    <p>Combining world-class medical expertise with compassionate care. We provide the highest quality healthcare services through our advanced facilities.</p>
+                </div>
+            </div>
+            <div class="slide">
+                <img src="https://images.unsplash.com/photo-1581056771107-24ca5f033842?auto=format&fit=crop&w=1200&q=80" alt="Laboratory">
+                <div class="slide-content">
+                    <h1>State-of-the-Art Technology</h1>
+                    <p>Outfitted with the latest medical technology and advanced laboratories to ensure precise diagnostics and highly effective treatments.</p>
+                </div>
+            </div>
+            <div class="slide">
+                <img src="https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=1200&q=80" alt="Operating Room">
+                <div class="slide-content">
+                    <h1>Renowned Specialists</h1>
+                    <p>Our dedicated team of award-winning surgeons and doctors are available 24/7 to provide life-saving care when you need it most.</p>
+                </div>
+            </div>
+        </div>
+        <button class="c-btn prev-btn" onclick="moveSlide(-1)">&#10094;</button>
+        <button class="c-btn next-btn" onclick="moveSlide(1)">&#10095;</button>
+        <div class="dots">
+            <div class="dot active" onclick="setSlide(0)"></div>
+            <div class="dot" onclick="setSlide(1)"></div>
+            <div class="dot" onclick="setSlide(2)"></div>
+        </div>
+    </div>
+
+    <!-- Portal Selection -->
+    <h2 style="text-align: center; margin-bottom: 2rem; font-size: 2rem;">Select Your Portal</h2>
+    <div class="portal-grid">
+        <a href="patient_portal.html" class="portal-card">
+            <div class="portal-icon">🩺</div>
+            <h2>Patient Portal</h2>
+            <p>View your medical history and upcoming appointments.</p>
+        </a>
+        <a href="doctor_portal.html" class="portal-card">
+            <div class="portal-icon">⚕️</div>
+            <h2>Doctor Portal</h2>
+            <p>Check your schedule and patient medical details for the day.</p>
+        </a>
+        <a href="index.html" class="portal-card">
+            <div class="portal-icon">⚙️</div>
+            <h2>Administrator Portal</h2>
+            <p>Manage hospital staff, register patients, and oversee operations.</p>
+        </a>
+    </div>
+
+    <!-- Famous Doctors Carousel -->
+    <h2 style="margin-top: 4rem; text-align: center;">Meet Our Acclaimed Specialists</h2>
+    <div class="carousel" id="doctorCarousel">
+        <div style="text-align: center; width: 100%;">Loading our amazing doctors...</div>
+    </div>
+
+    <script>
+        // Hero Carousel Logic
+        let currentSlide = 0;
+        const totalSlides = 3;
+        
+        function updateSlider() {
+            document.getElementById('heroSlider').style.transform = `translateX(-${currentSlide * 33.3333}%)`;
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        function moveSlide(direction) {
+            currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+            updateSlider();
+            resetAutoSlide();
+        }
+
+        function setSlide(index) {
+            currentSlide = index;
+            updateSlider();
+            resetAutoSlide();
+        }
+
+        let autoSlideInterval = setInterval(() => moveSlide(1), 5000);
+
+        function resetAutoSlide() {
+            clearInterval(autoSlideInterval);
+            autoSlideInterval = setInterval(() => moveSlide(1), 5000);
+        }
+
+        // Famous Doctors Logic
+        const API_BASE = 'http://localhost:8080/api';
+        async function loadFamousDoctors() {
+            try {
+                const res = await fetch(`${API_BASE}/doctors`);
+                const doctors = await res.json();
+                const carousel = document.getElementById('doctorCarousel');
+                carousel.innerHTML = '';
+                
+                doctors.forEach(d => {
+                    carousel.innerHTML += `
+                        <div class="carousel-item">
+                            <h3 style="color: white; margin-bottom: 0.5rem;">Dr. ${d.name}</h3>
+                            <span style="background: rgba(79, 70, 229, 0.2); padding: 4px 10px; border-radius: 20px; color: #a5b4fc; font-size: 0.85em;">${d.specialization}</span>
+                            <p style="margin-top: 1rem; font-size: 0.9em; color: var(--text-muted);">A leading expert in ${d.specialization} with years of dedicated experience at OasisCare.</p>
+                        </div>
+                    `;
+                });
+            } catch(e) { }
+        }
+        loadFamousDoctors();
+    </script>
+</body>
+</html>

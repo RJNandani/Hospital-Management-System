@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Doctors</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .search-bar { width: 100%; margin-bottom: 1rem; }
+        .action-btn { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 4px 10px; font-size: 0.8em; margin-right: 5px; }
+        .action-btn:hover { background: var(--primary); color: white; }
+        .save-btn { border-color: var(--accent); color: var(--accent); }
+        .save-btn:hover { background: var(--accent); color: white; }
+        td input { padding: 4px; font-size: 0.9em; width: 100%; }
+    </style>
 </head>
 <body>
     <div class="sidebar">
@@ -12,12 +20,13 @@
         <a href="index.html" class="nav-link">Dashboard</a>
         <a href="patients.html" class="nav-link">Manage Patients</a>
         <a href="doctors.html" class="nav-link active">Our Doctors</a>
+        <a href="appointments.html" class="nav-link">Appointments</a>
     </div>
     
     <div class="main-content">
         <header>
             <h1>Our Doctors</h1>
-            <p>Manage medical staff.</p>
+            <p>Manage medical staff, filter by specialty, and edit profiles.</p>
         </header>
 
         <div class="card">
@@ -29,7 +38,7 @@
                 </div>
                 <div class="form-group">
                     <label>Specialization</label>
-                    <input type="text" id="dSpec" required placeholder="e.g. Cardiology, Neurology">
+                    <input type="text" id="dSpec" required placeholder="Cardiology">
                 </div>
                 <button type="submit">Complete Onboarding</button>
             </form>
@@ -37,16 +46,17 @@
 
         <div class="card">
             <h2>Medical Staff Directory</h2>
+            <input type="text" id="filterDocs" class="search-bar" placeholder="🔍 Search doctors by name or specialization (e.g. 'Jane' or 'Neurology')..." onkeyup="filterDoctors()">
             <table>
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Name</th>
                         <th>Specialization</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="docBody">
-                    <!-- Populated via API -->
                 </tbody>
             </table>
         </div>
@@ -54,6 +64,7 @@
 
     <script>
         const API_BASE = 'http://localhost:8080/api';
+        let allDocs = [];
 
         document.getElementById('docForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -61,35 +72,77 @@
                 name: document.getElementById('dName').value,
                 specialization: document.getElementById('dSpec').value
             };
-            try {
-                await fetch(`${API_BASE}/doctors`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(doc)
-                });
-                e.target.reset();
-                loadDocs(); // Refresh right away
-            } catch (err) { alert("Failed to connect to backend"); }
+            await fetch(`${API_BASE}/doctors`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(doc)
+            });
+            e.target.reset();
+            loadDocs();
         });
 
         async function loadDocs() {
             try {
                 const res = await fetch(`${API_BASE}/doctors`);
-                const data = await res.json();
-                const tbody = document.getElementById('docBody');
-                tbody.innerHTML = '';
-                if(data.length === 0) tbody.innerHTML = '<tr><td colspan="3">No doctors registered.</td></tr>';
-                data.forEach(d => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>#${d.id}</td>
-                            <td style="font-weight: bold; color: white">Dr. ${d.name}</td>
-                            <td><span style="background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; font-size: 0.85em;">${d.specialization}</span></td>
-                        </tr>
-                    `;
-                });
+                allDocs = await res.json();
+                renderDocs(allDocs);
             } catch (err) {}
         }
+
+        function renderDocs(data) {
+            const tbody = document.getElementById('docBody');
+            tbody.innerHTML = '';
+            if(data.length === 0) tbody.innerHTML = '<tr><td colspan="4">No doctors registered.</td></tr>';
+            data.forEach(d => {
+                tbody.innerHTML += `
+                    <tr id="row-${d.id}">
+                        <td>#${d.id}</td>
+                        <td class="d-name" style="font-weight: bold; color: white">Dr. ${d.name}</td>
+                        <td class="d-spec"><span style="background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; font-size: 0.85em;">${d.specialization}</span></td>
+                        <td>
+                            <button class="action-btn" onclick="editDoc(${d.id})">Edit</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function filterDoctors() {
+            const term = document.getElementById('filterDocs').value.toLowerCase();
+            const filtered = allDocs.filter(d => 
+                d.specialization.toLowerCase().includes(term) || 
+                d.name.toLowerCase().includes(term)
+            );
+            renderDocs(filtered);
+        }
+
+        function editDoc(id) {
+            const row = document.getElementById(`row-${id}`);
+            // Remove "Dr. " safely
+            let rawName = row.querySelector('.d-name').innerText.replace("Dr. ", "");
+            const spec = row.querySelector('.d-spec').innerText;
+
+            row.innerHTML = `
+                <td>#${id}</td>
+                <td><input type="text" id="edit-dname-${id}" value="${rawName}"></td>
+                <td><input type="text" id="edit-dspec-${id}" value="${spec}"></td>
+                <td><button class="action-btn save-btn" onclick="saveDoc(${id})">Save</button></td>
+            `;
+        }
+
+        async function saveDoc(id) {
+            const updated = {
+                name: document.getElementById(`edit-dname-${id}`).value,
+                specialization: document.getElementById(`edit-dspec-${id}`).value
+            };
+            await fetch(`${API_BASE}/doctors/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updated)
+            });
+            loadDocs();
+        }
+
         loadDocs();
     </script>
 </body>
