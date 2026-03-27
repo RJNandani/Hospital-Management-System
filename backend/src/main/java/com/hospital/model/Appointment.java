@@ -22,6 +22,14 @@ public class Appointment {
     private String appointmentDate; // Stored as YYYY-MM-DD
     private String appointmentTime;
     private String status; // "SCHEDULED", "COMPLETED", "CANCELLED"
+    
+    // New Clinical Fields
+    @Column(length = 2000)
+    private String diagnosis;
+    @Column(length = 1000)
+    private String prescription;
+    @Column(length = 1000)
+    private String suggestedTests;
 
     public Appointment() {}
 
@@ -43,4 +51,13 @@ public class Appointment {
     
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getDiagnosis() { return diagnosis; }
+    public void setDiagnosis(String diagnosis) { this.diagnosis = diagnosis; }
+
+    public String getPrescription() { return prescription; }
+    public void setPrescription(String prescription) { this.prescription = prescription; }
+
+    public String getSuggestedTests() { return suggestedTests; }
+    public void setSuggestedTests(String suggestedTests) { this.suggestedTests = suggestedTests; }
 }

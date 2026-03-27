@@ -5,36 +5,202 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Portal</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .dashboard-wrapper { position: relative; width: 90vw; left: 50%; transform: translateX(-50%); }
+        .dashboard-layout { display: grid; grid-template-columns: 1fr 1fr 0.85fr; gap: 3rem; margin-top: 1rem; align-items: start; }
+        @media (max-width: 1024px) { .dashboard-layout { grid-template-columns: 1fr; } }
+    </style>
 </head>
-<body style="display: block; padding: 3rem; max-width: 800px; margin: 0 auto; min-height: 100vh;">
+<body style="display: block; padding: 2rem; max-width: 1200px; margin: 0 auto; min-height: 100vh; background: #0a192f;">
     
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <div class="logo" style="margin-bottom: 0;">Oasis<span>Care</span> | Doctor Portal</div>
         <a href="landing.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">← Back to Home</a>
     </div>
 
-    <div class="card">
-        <h2>Who is logging in?</h2>
-        <select id="doctorSelect" style="width: 100%; padding: 0.8rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; margin-top: 1rem; outline: none;" onchange="loadMySchedule()">
-            <option value="">-- Select Your Name --</option>
-        </select>
+    <!-- DOCTOR LOGIN SCREEN -->
+    <div id="authScreen" style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; max-width: 1000px; margin: 4rem auto; align-items: stretch;">
+        
+        <!-- MAIN SECURE LOGIN -->
+        <div class="card" style="padding: 3rem; display: flex; flex-direction: column; justify-content: center; border-top: 5px solid var(--primary);">
+            <h2 style="color: var(--primary); text-align: center; margin-bottom: 1rem; font-size: 1.8rem;">Secure Authentication</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem;">Full credentials required for administrative access.</p>
+            
+            <input type="text" id="dName" style="width: 100%; padding: 0.9rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; outline: none; margin-bottom: 1rem;" placeholder="Full Name">
+            <input type="text" id="dSpecialization" style="width: 100%; padding: 0.9rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; outline: none; margin-bottom: 1rem;" placeholder="Department">
+            <input type="number" id="dId" style="width: 100%; padding: 0.9rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; outline: none; margin-bottom: 2rem;" placeholder="Doctor ID #">
+            
+            <button class="btn-full" style="background: var(--primary); color: white; padding: 1rem; border-radius: 8px; font-weight: bold; cursor:pointer;" onclick="loginDoctor()">Secure Login</button>
+        </div>
+
+        <!-- QUICK ACCESS BOX (NEW) -->
+        <div class="card" style="padding: 3rem; display: flex; flex-direction: column; justify-content: center; border-top: 5px solid var(--accent); background: rgba(38, 166, 154, 0.05);">
+            <h2 style="color: var(--accent); text-align: center; margin-bottom: 1rem; font-size: 1.8rem;">Appointment Quick Access</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem;">Enter only your ID to manage today's clinical encounters.</p>
+            
+            <div style="background: rgba(255,255,255,0.03); padding: 2rem; border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1); margin-bottom: 2rem;">
+                <input type="number" id="quickDId" style="width: 100%; padding: 1.2rem; font-size: 1.5rem; text-align: center; background: rgba(0,0,0,0.2); border: 2px solid var(--accent); border-radius: 12px; color: white; outline: none;" placeholder="Doctor ID #">
+            </div>
+            
+            <button class="btn-full" style="background: var(--accent); color: white; padding: 1rem; border-radius: 8px; font-weight: bold; cursor:pointer;" onclick="quickLogin()">Open Appointment Desk</button>
+            <p id="loginError" style="color: #ff4b4b; text-align: center; margin-top: 1.5rem; display: none; font-weight: bold;">Authentication Failed.</p>
+        </div>
     </div>
 
-    <div id="doctorDashboard" style="display: none;">
-        <div class="card">
-            <h2>My Appointment Schedule</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Patient Name</th>
-                        <th>Medical History</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="myAppts"></tbody>
-            </table>
+    <!-- DOCTOR DASHBOARD -->
+    <div id="doctorDashboard" style="display: none;" class="dashboard-wrapper">
+        <div style="background: var(--primary); padding: 1.5rem 2rem; border-radius: 12px; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+            <div>
+                <h2 id="welcomeMsg" style="color: white; margin: 0;">Welcome, Doctor!</h2>
+                <p id="currentDateDisplay" style="color: rgba(255,255,255,0.7); margin: 5px 0 0 0; font-size: 0.9rem; font-weight: bold;"></p>
+            </div>
+            <button onclick="logout()" style="background: transparent; color: white; border: 1px solid white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">Log Out</button>
+        </div>
+
+        <div class="dashboard-layout">
+            <!-- LEFT: DOCTOR PROFILE + PATIENT LOOKUP -->
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                
+                <div class="card" style="margin: 0; padding: 2rem; border-top: 4px solid var(--accent);">
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                        <img id="myPhoto" src="" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid rgba(255,255,255,0.1); box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                        <h2 id="myName" style="color: var(--primary); margin-top: 1rem; font-size: 1.8rem;">Dr. Name</h2>
+                        <span id="myDept" style="background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 12px; font-size: 0.9rem; color: var(--accent);">Department</span>
+                    </div>
+                    
+                    <div style="font-size: 0.95rem; line-height: 1.6;">
+                        <p><strong style="color:white">DOB:</strong> <span id="myDob">...</span></p>
+                        <p><strong style="color:white">Gov ID:</strong> <span id="myGov">...</span></p>
+                        <p><strong style="color:white">Address:</strong> <span id="myAddress">...</span></p>
+                        <p><strong style="color:white">Education:</strong> <span id="myEd">...</span></p>
+                        <p><strong style="color:white">Experience:</strong> <span id="myExp">...</span></p>
+                        <p><strong style="color:white">Joined:</strong> <span id="myJoin">...</span></p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- MIDDLE: SHIFT SCHEDULE PLANNER -->
+            <div class="card" style="height: fit-content;">
+                <h2 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.4rem;">Daily Shift Controller</h2>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Manage your active shifts for today.</p>
+                <div id="shiftsContainer" style="margin-bottom: 2rem;">
+                    <!-- Shifts injected here -->
+                </div>
+                
+                <h3 style="color: white; font-size: 1.1rem; margin-bottom: 0.8rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem;">Add New Shift</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1rem;">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <select id="shDay" style="flex: 1; padding: 0.6rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; outline:none;">
+                            <option value="" style="color: black;">Select Day</option>
+                            <option value="Monday" style="color: black;">Monday</option>
+                            <option value="Tuesday" style="color: black;">Tuesday</option>
+                            <option value="Wednesday" style="color: black;">Wednesday</option>
+                            <option value="Thursday" style="color: black;">Thursday</option>
+                            <option value="Friday" style="color: black;">Friday</option>
+                            <option value="Saturday" style="color: black;">Saturday</option>
+                            <option value="Sunday" style="color: black;">Sunday</option>
+                        </select>
+                        <input type="date" id="shDate" style="flex: 1; padding: 0.6rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; outline:none;">
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="time" id="shStart" style="flex: 1; padding: 0.6rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; outline:none;">
+                        <span style="color: white; align-self: center; font-weight: bold;">TO</span>
+                        <input type="time" id="shEnd" style="flex: 1; padding: 0.6rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; outline:none;">
+                    </div>
+                </div>
+                <button style="width: 100%; padding: 0.8rem; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;" onclick="addShift()">Schedule Active Shift</button>
+            </div>
+
+            <!-- RIGHT: APPOINTMENT QUEUE -->
+            <div class="card" style="height: fit-content; border-top: 4px solid var(--accent);">
+                <h2 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.4rem;">Appointment Queue</h2>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">Patients currently awaiting consultation.</p>
+                <table style="width: 100%;">
+                    <tbody id="myAppts"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CLINICAL ENCOUNTER VIEW (POINT 3) -->
+    <div id="clinicalEncounterOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 25, 47, 0.98); z-index: 2000; justify-content: center; align-items: center; padding: 2rem;">
+        <div class="card" style="width: 100%; max-width: 1100px; max-height: 95vh; overflow-y: auto; background: var(--surface); position: relative; border-top: 6px solid var(--accent); padding: 4rem;">
+            <button onclick="closeEncounter()" style="position: absolute; top: 2rem; right: 2rem; background: transparent; color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 0.5rem 1rem; cursor: pointer;">Close Encounter ✖</button>
+            
+            <div style="display: flex; gap: 3rem; margin-bottom: 3rem; align-items: flex-start;">
+                <!-- LEFT: PATIENT CLINICAL HISTORY -->
+                <div style="flex: 0.8; background: rgba(255,255,255,0.03); padding: 2rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div>
+                        <h2 id="encPatientName" style="color: white; font-size: 2.2rem; margin-bottom: 0.5rem;">Patient Name</h2>
+                        <p style="color: var(--accent); font-weight: bold;">Patient ID: <span id="encPatientId">...</span> | Age: <span id="encPatientAge">...</span></p>
+                    </div>
+
+                    <div style="background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 8px;">
+                        <h3 style="color: var(--primary); font-size: 1rem; margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Medical History</h3>
+                        <div id="encPatientHistory" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; max-height: 150px; overflow-y: auto;">...</div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px;">
+                            <h4 style="color: var(--accent); font-size: 0.8rem; margin-bottom: 0.5rem;">Last Visit Date</h4>
+                            <p id="encLastDate" style="color: white; font-weight: bold; margin: 0;">N/A</p>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px;">
+                            <h4 style="color: var(--accent); font-size: 0.8rem; margin-bottom: 0.5rem;">Previous Issue</h4>
+                            <p id="encLastIssue" style="color: white; font-weight: bold; margin: 0;">N/A</p>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(38, 166, 154, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--accent);">
+                        <h3 style="color: var(--accent); font-size: 1rem; margin-bottom: 0.8rem;">Last Prescribed Meds</h3>
+                        <p id="encLastMeds" style="color: white; font-size: 0.95rem; line-height: 1.5; margin: 0;">No active prescriptions.</p>
+                    </div>
+
+                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 8px;">
+                        <h3 style="color: var(--primary); font-size: 1rem; margin-bottom: 0.8rem;">Historical Test Reports</h3>
+                        <p id="encLastTests" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin: 0;">N/A</p>
+                    </div>
+                </div>
+
+                <!-- RIGHT: TODAY'S ENCOUNTER -->
+                <div style="flex: 1;">
+                    <h2 style="color: white; margin-bottom: 1.5rem; font-size: 1.8rem; display: flex; align-items: center; gap: 1rem;">
+                        <span style="background: var(--accent); width: 12px; height: 12px; border-radius: 50%;"></span>
+                        Today's Prescription & Clinical Desk
+                    </h2>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 1.8rem;">
+                        <div>
+                            <label style="color: var(--primary); font-weight: bold; display: block; margin-bottom: 0.8rem; font-size: 1.1rem;">Write Today's Prescription & Treatment Plan</label>
+                            <textarea id="encMedsDaily" style="width: 100%; height: 180px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; padding: 1.5rem; outline: none; font-size: 1.1rem; line-height: 1.6;" placeholder="Enter medications, dosage, and diagnostic notes..."></textarea>
+                        </div>
+
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="color: var(--primary); font-weight: 800; font-size: 1.1rem; display: block; margin-bottom: 0.5rem;">Issue Diagnosed (Status Update)</label>
+                            <input type="text" id="encDiagnosisDaily" style="width: 100%; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; padding: 1rem; outline: none; font-size: 1rem;" placeholder="Primary condition found today...">
+                        </div>
+
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="color: var(--primary); font-weight: 800; font-size: 1.1rem; display: block; margin-bottom: 0.5rem;">Suggested Tests (Reports required?)</label>
+                            <input type="text" id="encTestsDaily" style="width: 100%; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; padding: 1rem; outline: none; font-size: 1rem;" placeholder="Blood test, X-Ray, etc or leave empty...">
+                        </div>
+
+                        <div style="margin-top: 2rem; padding-bottom: 4rem; display: flex; justify-content: flex-end; align-items: center; gap: 2rem;">
+                            <span style="color: var(--text-muted); font-size: 0.9rem;">Finalizing this session will move the appointment to history.</span>
+                            <div id="btnExecuteEncounter" 
+                                 onclick="console.log('Div Clicked'); executeClinicalEncounter();"
+                                 style="background: var(--accent); color: white; border: none; padding: 1.2rem 3.5rem; border-radius: 12px; font-weight: bold; font-size: 1.3rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.8rem; box-shadow: 0 4px 25px rgba(38, 166, 154, 0.5); user-select: none; position: relative; z-index: 99999 !important;"
+                                 onmouseover="this.style.filter='brightness(1.2)';"
+                                 onmouseout="this.style.filter='none';">
+                                <span style="pointer-events: none; font-size: 1.5rem;">✓</span>
+                                <span style="pointer-events: none;">Execute Visit</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -42,48 +208,348 @@
         const API_BASE = 'http://localhost:8080/api';
         let allDocs = [];
         let allAppts = [];
+        let allPts = [];
+        let currentDoc = null;
 
         async function initPortal() {
             try {
-                const [docs, appts] = await Promise.all([
+                const [docs, appts, pts] = await Promise.all([
                     fetch(`${API_BASE}/doctors`).then(r => r.json()),
-                    fetch(`${API_BASE}/appointments`).then(r => r.json())
+                    fetch(`${API_BASE}/appointments`).then(r => r.json()),
+                    fetch(`${API_BASE}/patients`).then(r => r.json())
                 ]);
                 allDocs = docs;
                 allAppts = appts;
+                allPts = pts;
+            } catch(e) { console.error("Failed to load portal data", e); }
+        }
+        initPortal();
 
-                const sel = document.getElementById('doctorSelect');
-                docs.forEach(d => {
-                    sel.innerHTML += `<option value="${d.id}">Dr. ${d.name} (${d.specialization})</option>`;
-                });
-            } catch(e){}
+        function loginDoctor() {
+            const dName = document.getElementById('dName').value;
+            const dSpec = document.getElementById('dSpecialization').value;
+            const dId = document.getElementById('dId').value;
+            const errBox = document.getElementById('loginError');
+            
+            if(!dName || !dSpec || !dId) return;
+
+            const myDoc = allDocs.find(d => 
+                String(d.id) === String(dId) && 
+                d.name.toLowerCase() === dName.toLowerCase() && 
+                d.specialization.toLowerCase() === dSpec.toLowerCase()
+            );
+            
+            if(!myDoc) {
+                errBox.style.display = 'block';
+            } else {
+                completeLogin(myDoc);
+            }
         }
 
-        function loadMySchedule() {
-            const did = document.getElementById('doctorSelect').value;
-            const dash = document.getElementById('doctorDashboard');
-            if(!did) { dash.style.display = 'none'; return; }
+        function quickLogin() {
+            const dId = document.getElementById('quickDId').value;
+            const errBox = document.getElementById('loginError');
+            if(!dId) return;
+
+            const myDoc = allDocs.find(d => String(d.id) === String(dId));
+            if(!myDoc) {
+                errBox.style.display = 'block';
+            } else {
+                completeLogin(myDoc, true);
+            }
+        }
+
+        function completeLogin(doc, isQuick = false) {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('doctorDashboard').style.display = 'block';
             
-            dash.style.display = 'block';
+            const layout = document.querySelector('.dashboard-layout');
+            const col1 = layout.children[0];
+            const col2 = layout.children[1];
             
-            const myA = allAppts.filter(a => a.doctor.id == did);
+            if(isQuick) {
+                col1.style.display = 'none';
+                col2.style.display = 'none';
+                layout.style.gridTemplateColumns = '1fr';
+            } else {
+                col1.style.display = 'flex';
+                col2.style.display = 'block';
+                layout.style.gridTemplateColumns = '1fr 1fr 0.85fr';
+            }
+
+            currentDoc = doc;
+            populateDashboard(doc);
+        }
+
+        function populateDashboard(doc) {
+            document.getElementById('welcomeMsg').innerText = `Dr. ${doc.name}'s Portal`;
+            document.getElementById('myPhoto').src = doc.photographUrl || "https://images.unsplash.com/photo-1594824432258-0ceb5e0c52f6?q=80&w=300&h=300&auto=format&fit=crop";
+            document.getElementById('myName').innerText = `Dr. ${doc.name}`;
+            document.getElementById('myDept').innerText = doc.specialization;
+            
+            document.getElementById('myDob').innerText = doc.dob || "N/A";
+            document.getElementById('myGov').innerText = doc.govId || "N/A";
+            document.getElementById('myAddress').innerText = doc.address || "N/A";
+            document.getElementById('myEd').innerText = doc.education || "N/A";
+            document.getElementById('myExp').innerText = doc.experience || "N/A";
+            document.getElementById('myJoin').innerText = doc.joiningDate || "N/A";
+            
+            renderShifts(doc.activeShifts);
+            loadMySchedule(doc.id);
+        }
+
+        function renderShifts(shiftStr) {
+            const box = document.getElementById('shiftsContainer');
+            box.innerHTML = '';
+            if(!shiftStr) {
+                box.innerHTML = '<div style="color:var(--text-muted); font-style:italic;">No active shifts today.</div>';
+                return;
+            }
+            const shifts = shiftStr.split(',');
+            shifts.forEach(s => {
+                if(!s.trim()) return;
+                const parts = s.trim().split(' ');
+                // Expected format: Day (OptionalDate) TimeRange
+                // Example: Monday 10:00-14:00 or Monday (2026-03-28) 10:00-14:00
+                box.innerHTML += `<div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 1rem; transition: 0.3s;" onmouseover="this.style.background='rgba(38,166,154,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                    <span style="color: var(--accent); font-size: 1.5rem;">⏱</span> 
+                    <div>
+                        <span style="color: white; font-weight: bold; font-size: 1rem; letter-spacing: 1px; display: block;">${s.trim()}</span>
+                    </div>
+                </div>`;
+            });
+        }
+
+        async function addShift() {
+            const day = document.getElementById('shDay').value;
+            const date = document.getElementById('shDate').value;
+            const start = document.getElementById('shStart').value;
+            const end = document.getElementById('shEnd').value;
+            if(!start || !end) return;
+            
+            let newShift = day ? `${day} ` : "";
+            if(date) newShift += `(${date}) `;
+            newShift += `${start}-${end}`;
+
+            let currentShifts = currentDoc.activeShifts ? currentDoc.activeShifts + ", " : "";
+            currentShifts += newShift;
+            
+            // Persistence update
+            try {
+                const response = await fetch(`${API_BASE}/doctors/${currentDoc.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...currentDoc, activeShifts: currentShifts })
+                });
+                if(response.ok) {
+                    const updated = await response.json();
+                    currentDoc = updated;
+                    renderShifts(currentDoc.activeShifts);
+                    
+                    // Clear inputs
+                    document.getElementById('shDay').value = '';
+                    document.getElementById('shDate').value = '';
+                    document.getElementById('shStart').value = '';
+                    document.getElementById('shEnd').value = '';
+                }
+            } catch(e) { console.error("Failed to update shift", e); }
+        }
+
+        function loadMySchedule(did) {
+            const myA = allAppts.filter(a => a.doctor.id == did && a.status === 'SCHEDULED');
+            
+            // Sort chronologically (Date then Time)
+            myA.sort((a,b) => {
+                const dateA = new Date(a.appointmentDate);
+                const dateB = new Date(b.appointmentDate);
+                if (dateA - dateB !== 0) return dateA - dateB;
+                
+                // Compare times if dates are same
+                return a.appointmentTime.localeCompare(b.appointmentTime);
+            });
+            
             const tbody = document.getElementById('myAppts');
             tbody.innerHTML = '';
-            if(myA.length === 0) tbody.innerHTML = '<tr><td colspan="5">No appointments scheduled for you.</td></tr>';
+            if(myA.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding-top: 1rem;">No queued appointments.</td></tr>'; return; }
             
-            myA.forEach(a => {
+            myA.forEach((a, index) => {
+                let statusClass = a.status === 'COMPLETED' ? 'color:#26A69A;' : 'color:#64B5F6;';
+                let boxColor = index % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent';
                 tbody.innerHTML += `
-                    <tr>
-                        <td style="font-weight:bold; color:white">${a.patient.name}</td>
-                        <td style="color:var(--text-muted); font-size: 0.9em;">${a.patient.medicalHistory}</td>
-                        <td>${a.appointmentDate}</td>
-                        <td>${a.appointmentTime}</td>
-                        <td><span style="color:var(--accent); font-weight: bold;">${a.status}</span></td>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); background:${boxColor}; cursor: pointer;" onclick="openEncounter(${a.id})">
+                        <td style="padding: 1.2rem 0.5rem;">
+                            <strong style="color:white; font-size:1.1em; display:block; margin-bottom: 4px;">${a.patient.name}</strong>
+                            <span style="font-size:0.85em; color:var(--text-muted); background:rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 6px;">ID: ${a.patient.id}</span>
+                        </td>
+                        <td style="padding: 1.2rem 0.5rem;">
+                            <strong style="color:var(--accent); font-size:1em; display:block; margin-bottom:4px;">${a.appointmentDate}</strong>
+                            <span style="color:white">${a.appointmentTime}</span>
+                        </td>
+                        <td style="text-align:right; padding: 1.2rem 0.5rem;">
+                            <span style="font-weight:bold; letter-spacing: 1px; ${statusClass}">${a.status}</span>
+                        </td>
                     </tr>
                 `;
             });
         }
-        initPortal();
+
+        async function updateApptStatus(id, newStatus) {
+            try {
+                const response = await fetch(`${API_BASE}/appointments/${id}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newStatus)
+                });
+                if(response.ok) {
+                    // Update local state and re-render
+                    const appt = allAppts.find(a => a.id == id);
+                    if(appt) appt.status = newStatus;
+                    loadMySchedule(currentDoc.id);
+                }
+            } catch(e) { console.error("Failed to update status", e); }
+        }
+
+        function setRealTimeDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDateDisplay').innerText = now.toLocaleDateString('en-US', options);
+        }
+        setRealTimeDate();
+
+        let activeEncounterApptId = null;
+        function openEncounter(apptId) {
+            const appt = allAppts.find(a => a.id == apptId);
+            if(!appt) return;
+            if(appt.status === 'COMPLETED') {
+                alert("This appointment has already been executed.");
+                return;
+            }
+
+            activeEncounterApptId = apptId;
+            document.getElementById('clinicalEncounterOverlay').style.display = 'flex';
+            
+            document.getElementById('encPatientName').innerText = appt.patient.name;
+            document.getElementById('encPatientId').innerText = appt.patient.id;
+            document.getElementById('encPatientAge').innerText = appt.patient.age;
+            
+            // Historical Data Display
+            document.getElementById('encPatientHistory').innerText = appt.patient.medicalHistory || "None recorded.";
+            document.getElementById('encLastMeds').innerText = appt.patient.lastPrescription || "No previous records.";
+            document.getElementById('encLastTests').innerText = appt.patient.testResults || "No previous reports.";
+
+            // Dynamic Last Appointment Calculation
+            const pastAppts = allAppts.filter(a => 
+                a.patient.id == appt.patient.id && 
+                a.status === 'COMPLETED' && 
+                a.id != apptId
+            ).sort((a,b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
+
+            if(pastAppts.length > 0) {
+                document.getElementById('encLastDate').innerText = pastAppts[0].appointmentDate;
+                document.getElementById('encLastIssue').innerText = pastAppts[0].diagnosis || "Consultation";
+            } else {
+                document.getElementById('encLastDate').innerText = "New Patient";
+                document.getElementById('encLastIssue').innerText = "N/A";
+            }
+
+            // Clear inputs for new session
+            document.getElementById('encDiagnosisDaily').value = '';
+            document.getElementById('encMedsDaily').value = '';
+        }
+
+        function closeEncounter() {
+            document.getElementById('clinicalEncounterOverlay').style.display = 'none';
+            activeEncounterApptId = null;
+        }
+
+        async function executeClinicalEncounter() {
+            const diagnosis = document.getElementById('encDiagnosisDaily').value;
+            const prescription = document.getElementById('encMedsDaily').value;
+            const tests = document.getElementById('encTestsDaily').value;
+
+            if(!diagnosis.trim() || !prescription.trim()) {
+                alert("Please fill in both the Diagnosis and today's Prescription before executing.");
+                return;
+            }
+
+            // POINT 6: INSTANT UI TRANSITION (Snappy Update)
+            // 1. Mark local status as COMPLETED so it disappears from 'SCHEDULED' filter
+            const localAppt = allAppts.find(a => a.id == activeEncounterApptId);
+            if(localAppt) {
+                localAppt.status = 'COMPLETED';
+                localAppt.diagnosis = diagnosis;
+                localAppt.prescription = prescription;
+            }
+
+            // 2. Hide overlay immediately back to appointment list
+            closeEncounter();
+            
+            // 3. Refresh the doctor's active list (will now be removed)
+            if(currentDoc) loadMySchedule(currentDoc.id);
+
+            // 4. Background Sync (Backend persistence)
+            try {
+                const response = await fetch(`${API_BASE}/appointments/${activeEncounterApptId}/execute`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ diagnosis, prescription, tests })
+                });
+
+                if(!response.ok) {
+                    console.error("Delayed Sync failed: Server error.");
+                } else {
+                    console.log("Sync successful.");
+                    // Final re-fetch to ensure consistency
+                    await initPortal(); 
+                    if(currentDoc) loadMySchedule(currentDoc.id);
+                }
+            } catch(e) { 
+                console.error("Delayed Sync failed (Network Error): Probably CORS or Server Down.");
+                // We don't alert here to not interrupt the user's flow since UI is already updated
+            }
+        }
+
+        function openPatientRecord() {
+            const pid = document.getElementById('lookupId').value;
+            const err = document.getElementById('lookupError');
+            if(!pid) return;
+            
+            const pt = allPts.find(p => p.id == pid);
+            if(!pt) {
+                err.style.display = 'block';
+            } else {
+                err.style.display = 'none';
+                document.getElementById('patientRecordOverlay').style.display = 'flex';
+                
+                document.getElementById('prName').innerText = pt.name;
+                document.getElementById('prId').innerText = pt.id;
+                document.getElementById('prAge').innerText = pt.age;
+                document.getElementById('prContact').innerText = pt.contactNumber || "N/A";
+                
+                let histStr = pt.medicalHistory || "None recorded.";
+                let ul = '<ul style="padding-left:1.5rem; margin:0;">';
+                histStr.split(',').forEach(i => { if(i.trim()) ul += `<li style="margin-bottom:0.8rem;">${i.trim()}</li>`; });
+                ul += '</ul>';
+                document.getElementById('prHistory').innerHTML = ul;
+
+                document.getElementById('prTests').innerText = pt.testResults || "No tests on file.";
+                document.getElementById('prMeds').innerText = pt.lastPrescription || "No active prescriptions.";
+            }
+        }
+
+        function closePatientRecord() {
+            document.getElementById('patientRecordOverlay').style.display = 'none';
+        }
+
+        function logout() {
+            document.getElementById('dName').value = '';
+            document.getElementById('dSpecialization').value = '';
+            document.getElementById('dId').value = '';
+            document.getElementById('doctorDashboard').style.display = 'none';
+            document.getElementById('authScreen').style.display = 'block';
+            document.getElementById('loginError').style.display = 'none';
+            currentDoc = null;
+        }
     </script>
 </body>
 </html>

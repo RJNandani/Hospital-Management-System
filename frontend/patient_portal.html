@@ -122,12 +122,36 @@
                 </div>
             </div>
 
-            <!-- MIDDLE: APPOINTMENTS TIMELINE -->
-            <div class="card" style="height: fit-content;">
-                <h2 style="color: var(--primary); margin-bottom: 1rem;">Appointment Timeline</h2>
-                <table style="width: 100%;">
-                    <tbody id="myAppts"></tbody>
-                </table>
+            <!-- MIDDLE: APPOINTMENT FLOW -->
+            <div style="display: flex; flex-direction: column; gap: 2.5rem;">
+                
+                <!-- UPCOMING SCHEDULE BOX -->
+                <div class="card" style="margin: 0; height: fit-content; border-top: 5px solid var(--primary); padding: 2rem;">
+                    <h2 style="color: var(--primary); margin-bottom: 1.5rem; font-size: 1.6rem; display: flex; align-items: center; gap: 0.8rem;">
+                        <span style="font-size: 1.3rem;">📅</span> Upcoming Schedule
+                    </h2>
+                    <table style="width: 100%;">
+                        <tbody id="upcomingAppts"></tbody>
+                    </table>
+                </div>
+
+                <!-- PAST APPOINTMENTS BOX -->
+                <div class="card" style="margin: 0; height: fit-content; border-top: 5px solid var(--accent); padding: 2.5rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                        <div style="background: var(--accent); padding: 0.8rem; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 1.5rem; color: white;">📜</span>
+                        </div>
+                        <div>
+                            <h2 style="color: var(--accent); margin: 0; font-size: 1.8rem;">Past Appointments</h2>
+                            <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">Verified Clinical History & Prescriptions</p>
+                        </div>
+                    </div>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table style="width: 100%; border-collapse: separate; border-spacing: 0 1rem;">
+                            <tbody id="pastAppts"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- RIGHT: BOOK FUTURE APPOINTMENT -->
@@ -143,19 +167,21 @@
                 <form id="bookApptForm">
                     <div class="form-group">
                         <label style="color: white; margin-bottom: 0.5rem; display: block;">Select Doctor</label>
-                        <select id="bDoctor" required style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white;">
+                        <select id="bDoctor" required style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white;" onchange="generateSlots()">
                             <option value="">-- Choose a Doctor --</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label style="color: white; margin-bottom: 0.5rem; display: block;">Date</label>
-                        <input type="date" id="bDate" required>
+                        <input type="date" id="bDate" style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white;" required onchange="generateSlots()" id="bookingDateInput">
                     </div>
                     <div class="form-group">
-                        <label style="color: white; margin-bottom: 0.5rem; display: block;">Time</label>
-                        <input type="time" id="bTime" required>
+                        <label style="color: white; margin-bottom: 0.5rem; display: block;">Available Time Slots</label>
+                        <select id="bTime" required style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white;">
+                            <option value="" style="color:black;">-- Select Date & Doctor First --</option>
+                        </select>
                     </div>
-                    <button type="submit" class="btn-full" style="background: var(--primary); color: white; margin-top: 1rem; border: none; cursor:pointer;">Confirm Booking</button>
+                    <button type="submit" class="btn-full" style="background: var(--primary); color: white; margin-top: 1rem; border: none; cursor:pointer; font-weight: bold;">Confirm Booking</button>
                 </form>
             </div>
         </div>
@@ -177,6 +203,10 @@
                 allDocsHome.forEach(d => {
                     docSelect.innerHTML += `<option value="${d.id}" style="color: black;">Dr. ${d.name} - ${d.specialization}</option>`;
                 });
+
+                // Set min date to today
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('bDate').setAttribute('min', today);
             } catch(e){}
         }
         initPortal();
@@ -212,6 +242,62 @@
             document.getElementById('bDoctor').value = docId;
             document.getElementById('internalDocResults').style.display = 'none';
             document.getElementById('internalFilter').value = '';
+            generateSlots();
+        }
+
+        function generateSlots() {
+            const docSelect = document.getElementById('bDoctor');
+            const dateInput = document.getElementById('bDate');
+            const timeSelect = document.getElementById('bTime');
+            
+            timeSelect.innerHTML = '<option value="" style="color:black;">-- Select a Slot --</option>';
+            
+            if(!docSelect.value || !dateInput.value) return;
+
+            const targetDoc = allDocsHome.find(d => String(d.id) === String(docSelect.value));
+            if(!targetDoc) return;
+
+            const selectedDate = new Date(dateInput.value);
+            const selectedDay = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+            const selectedDateStr = dateInput.value;
+
+            // Compute actual mathematical intervals for frontend UX dropdown mapping!
+            let shiftData = targetDoc.activeShifts || ""; 
+            let shArray = shiftData.split(',');
+
+            shArray.forEach(s => {
+                const shiftStr = s.trim();
+                if(!shiftStr) return;
+
+                // Match by Day or by specific Date (YYYY-MM-DD)
+                const isDayMatch = shiftStr.toLowerCase().startsWith(selectedDay.toLowerCase());
+                const isDateMatch = shiftStr.includes(`(${selectedDateStr})`);
+
+                if(!isDayMatch && !isDateMatch) return;
+
+                // Extract time range (e.g. 10:00-14:00)
+                const timeMatch = shiftStr.match(/(\d{2}:\d{2})-(\d{2}:\d{2})/);
+                if(!timeMatch) return;
+                
+                let [sH, sM] = timeMatch[1].split(':').map(Number);
+                let [eH, eM] = timeMatch[2].split(':').map(Number);
+
+                let curH = sH;
+                let curM = sM || 0;
+                
+                while(curH < eH || (curH === eH && curM < eM)) {
+                    let slotStr = `${curH.toString().padStart(2,'0')}:${curM.toString().padStart(2,'0')}`;
+                    timeSelect.innerHTML += `<option value="${slotStr}" style="color:black; font-weight:bold;">${slotStr} (${isDateMatch ? 'Special' : 'Regular'})</option>`;
+                    curM += 30;
+                    if(curM >= 60) {
+                        curH++;
+                        curM -= 60;
+                    }
+                }
+            });
+            if(timeSelect.options.length <= 1) {
+                timeSelect.innerHTML = '<option value="" style="color:black;">-- No shifts available for this day --</option>';
+            }
         }
 
         // Doctor Filter Logic
@@ -341,24 +427,49 @@
                     return dA - dB; // sorts ascending (FIFO)
                 });
 
-                const tbody = document.getElementById('myAppts');
-                tbody.innerHTML = '';
-                if(myA.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No appointment history.</td></tr>';
-                    return;
+                // Render Upcoming
+                const upcomingTbody = document.getElementById('upcomingAppts');
+                const pastTbody = document.getElementById('pastAppts');
+                upcomingTbody.innerHTML = '';
+                pastTbody.innerHTML = '';
+
+                const upcoming = myA.filter(a => a.status !== 'COMPLETED');
+                const past = myA.filter(a => a.status === 'COMPLETED');
+
+                if(upcoming.length === 0) {
+                    upcomingTbody.innerHTML = '<tr><td style="text-align:center; color:gray; padding:2rem;">No upcoming visits scheduled.</td></tr>';
                 }
-                
-                myA.forEach(a => {
-                    let statusClass = a.status === 'COMPLETED' ? 'status-completed' : 'status-scheduled';
-                    tbody.innerHTML += `
+                if(past.length === 0) {
+                    pastTbody.innerHTML = '<tr><td style="text-align:center; color:gray; padding:2rem;">No past medical history.</td></tr>';
+                }
+
+                upcoming.forEach(a => {
+                    upcomingTbody.innerHTML += `
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <td style="padding: 1rem 0.5rem;">
+                            <td style="padding: 1rem 0;">
                                 <span class="timeline-date">${a.appointmentDate} at ${a.appointmentTime}</span>
-                                <strong style="color:white; display:block; margin-top:0.3rem;">Dr. ${a.doctor.name}</strong>
-                                <span style="font-size: 0.85em; color: var(--text-muted);">${a.doctor.specialization}</span>
+                                <strong style="color:white; display:block;">Dr. ${a.doctor.name}</strong>
+                                <span style="font-size: 0.8em; color: var(--text-muted);">${a.doctor.specialization}</span>
                             </td>
-                            <td style="text-align: right;">
-                                <span class="appt-status ${statusClass}">${a.status}</span>
+                            <td style="text-align: right; vertical-align: middle;">
+                                <span class="appt-status status-scheduled">SCHEDULED</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                past.forEach(a => {
+                    pastTbody.innerHTML += `
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 1.5rem 0;">
+                                <span style="color:var(--accent); font-size:0.8em; font-weight:bold; background:rgba(38,166,154,0.1); padding:2px 6px; border-radius:4px;">COMPLETED</span>
+                                <span class="timeline-date" style="margin-top:0.5rem;">${a.appointmentDate}</span>
+                                <strong style="color:white; display:block; margin-top:0.3rem;">Dr. ${a.doctor.name}</strong>
+                                <div style="margin-top:0.8rem; background:rgba(255,255,255,0.03); padding:1rem; border-radius:12px; border-left:4px solid var(--accent);">
+                                    <p style="margin:0 0 5px 0;"><strong style="color:var(--primary)">Diagnosis:</strong> ${a.diagnosis || 'Consultation'}</p>
+                                    <p style="margin:0 0 5px 0;"><strong style="color:var(--accent)">Prescription:</strong> ${a.prescription || 'N/A'}</p>
+                                    ${a.suggestedTests ? `<p style="margin:0;"><strong style="color:#FFA726">Suggested Tests:</strong> ${a.suggestedTests}</p>` : ''}
+                                </div>
                             </td>
                         </tr>
                     `;
